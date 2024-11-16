@@ -1,69 +1,114 @@
 import javafx.application.Application;
+import javafx.geometry.Insets;
 import javafx.scene.Scene;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.control.TextArea;
-import javafx.scene.control.TextField;
-import javafx.scene.layout.VBox;
+import javafx.scene.control.*;
+import javafx.scene.layout.*;
 import javafx.stage.Stage;
-
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.Date;
 
 public class FinanceApp extends Application {
+
     private User user;
 
     @Override
     public void start(Stage primaryStage) {
-        primaryStage.setTitle("Financial Manager");
+        // Initialize the user object
+        user = new User("U001", "John Doe", "Account123");
 
-        // User input fields
-        TextField nameField = new TextField();
-        nameField.setPromptText("Enter your name");
+        // Layouts
+        VBox layout = new VBox(10);
+        layout.setPadding(new Insets(10)); // Use Insets from javafx.geometry
+
+        // Form fields for adding a financial record
+        TextField dateField = new TextField();
+        dateField.setPromptText("Date (YYYY-MM-DD)");
 
         TextField amountField = new TextField();
-        amountField.setPromptText("Enter transaction amount");
+        amountField.setPromptText("Amount");
 
         TextField descriptionField = new TextField();
-        descriptionField.setPromptText("Enter description");
+        descriptionField.setPromptText("Description");
 
-        // Button to add transaction
-        Button addButton = new Button("Add Transaction");
-        addButton.setOnAction(e -> {
-            double amount = Double.parseDouble(amountField.getText());
-            String description = descriptionField.getText();
-            Date date = new Date(); // current date for simplicity
-            Transaction transaction = new Transaction(date, amount, description, "General", "Credit");
-            user.addRecord(transaction);
-            amountField.clear();
-            descriptionField.clear();
-            updateSummary();
+        TextField typeField = new TextField();
+        typeField.setPromptText("Type (Transaction, Budget, or Investment)");
+
+        TextField extraField = new TextField();
+        extraField.setPromptText("Extra Info (Category/Limit/Returns)");
+
+        Button addRecordButton = new Button("Add Record");
+        Label statusLabel = new Label();
+
+        // Undo Button
+        Button undoButton = new Button("Undo Last Transaction");
+        undoButton.setDisable(true); // Disabled initially
+
+        // Add Record Button Action
+        addRecordButton.setOnAction(e -> {
+            try {
+                String dateString = dateField.getText();
+                // Parse the string into a LocalDate object
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+                LocalDate localDate = LocalDate.parse(dateString, formatter);
+                Date date = java.sql.Date.valueOf(localDate); // Convert to java.util.Date if needed
+
+                double amount = Double.parseDouble(amountField.getText());
+                String description = descriptionField.getText();
+                String type = typeField.getText();
+                String extra = extraField.getText();  // For investmentType, or budgetLimit
+
+                FinancialRecord record = null;
+
+                switch (type.toLowerCase()) {
+                    case "transaction":
+                        record = new Transaction(date, amount, description, extra, "Expense");
+                        break;
+                    case "budget":
+                        record = new Budget(date, amount, description, Double.parseDouble(extra), 0.0);
+                        break;
+                    case "investment":
+                        // Pass correct arguments: investmentType (String), returns (int)
+                        record = new Investment(date, amount, description, extra, Integer.parseInt(extra));
+                        break;
+                    default:
+                        throw new IllegalArgumentException("Invalid type: " + type);
+                }
+
+                user.addRecord(record);
+                statusLabel.setText("Record added successfully!");
+                undoButton.setDisable(false); // Enable the undo button
+
+            } catch (Exception ex) {
+                statusLabel.setText("Error: " + ex.getMessage());
+            }
         });
 
-        // Text area to display summary
-        TextArea summaryArea = new TextArea();
-        summaryArea.setEditable(false);
 
-        VBox layout = new VBox(10, new Label("Name:"), nameField, amountField, descriptionField, addButton, summaryArea);
-        Scene scene = new Scene(layout, 400, 400);
+        // Undo Button Action
+        undoButton.setOnAction(e -> {
+            user.undoLastRecord();
+            statusLabel.setText("Last record undone.");
+            if (user.getFinancialSummary().isEmpty()) {
+                undoButton.setDisable(true); // Disable if no records remain
+            }
+        });
+
+        // Layout configuration
+        layout.getChildren().addAll(
+                new Label("Add Financial Record"),
+                dateField, amountField, descriptionField, typeField, extraField,
+                addRecordButton, undoButton, statusLabel
+        );
+
+        // Scene setup
+        Scene scene = new Scene(layout, 400, 300);
         primaryStage.setScene(scene);
+        primaryStage.setTitle("Finance Management");
         primaryStage.show();
     }
 
-    private void updateSummary() {
-        if (user != null) {
-            StringBuilder summary = new StringBuilder("Financial Summary for " + user.getName() + ":\n");
-            for (FinancialRecord record : user.financialRecords) {
-                summary.append(record.getDetails()).append("\n");
-            }
-            // Assume you have a reference to the TextArea to update here
-            // summaryArea.setText(summary.toString()); // Uncomment and use in your code
-        }
-    }
-
     public static void main(String[] args) {
-        // Initialize user
-        FinanceApp app = new FinanceApp();
-        app.user = new User("1", "John Doe", "12345"); // Example user
         launch(args);
     }
 }

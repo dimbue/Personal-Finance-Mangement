@@ -11,6 +11,9 @@ public abstract class FinancialRecord {
         this.description = description;
     }
 
-    public abstract String getDetails();
+    public String getDetails() {
+        return String.format("Date: %s, Amount: %.2f, Description: %s", date, amount, description);
+    }
+
     public abstract double calculateTotal();
 }

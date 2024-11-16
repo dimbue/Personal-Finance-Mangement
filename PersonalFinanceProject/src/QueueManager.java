@@ -4,6 +4,7 @@ import java.util.Queue;
 public class QueueManager {
     private Queue<Runnable> scheduledTasks;
 
+    //implementing a LinkedList that will be used to manage a queue of tasks.
     public QueueManager() {
         this.scheduledTasks = new LinkedList<>();
     }
