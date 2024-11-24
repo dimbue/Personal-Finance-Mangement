@@ -1,5 +1,4 @@
 import java.util.Date;
-
 public abstract class FinancialRecord {
     protected Date date;
     protected double amount;
@@ -11,9 +10,14 @@ public abstract class FinancialRecord {
         this.description = description;
     }
 
-    public String getDetails() {
-        return String.format("Date: %s, Amount: %.2f, Description: %s", date, amount, description);
+    public Date getDate() {
+        return date;  // Return the date associated with the financial record
     }
 
+    public abstract String getDetails();
     public abstract double calculateTotal();
+
+    public double getAmount() {
+        return amount;
+    }
 }

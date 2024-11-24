@@ -4,11 +4,11 @@ public class Investment extends FinancialRecord {
     private String investmentType;
     private double returns; // Keeping returns as a double to represent calculated returns
 
-    // Updated constructor to include returns as an argument (type double)
+    // Updated to include the returns as a double
     public Investment(Date date, double amount, String description, String investmentType, double returns) {
         super(date, amount, description); // Calling superclass constructor
         this.investmentType = investmentType;
-        this.returns = returns; // Initializing returns with the provided value
+        this.returns = returns;
     }
 
     @Override
@@ -18,7 +18,7 @@ public class Investment extends FinancialRecord {
 
     @Override
     public double calculateTotal() {
-        return amount + returns; // Returns calculated from the investment amount and returns rate
+        return amount + returns;
     }
 
     // Updated method to calculate returns based on a percentage
@@ -26,6 +26,6 @@ public class Investment extends FinancialRecord {
         returns = amount * returnPercentage / 100;
     }
 
-    // Getter and setter methods for investmentType and returns can be added as needed
+
 }
 

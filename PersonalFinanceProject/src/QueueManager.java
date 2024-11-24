@@ -1,10 +1,12 @@
 import java.util.LinkedList;
 import java.util.Queue;
 
+
+//This class is currently in limbo as I don't know if I will still utilize it in the final
 public class QueueManager {
     private Queue<Runnable> scheduledTasks;
 
-    //implementing a LinkedList that will be used to manage a queue of tasks.
+
     public QueueManager() {
         this.scheduledTasks = new LinkedList<>();
     }

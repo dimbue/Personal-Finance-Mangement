@@ -14,7 +14,7 @@ public class Budget extends FinancialRecord {
     @Override
     public String getDetails() {
         return String.format("Budget: %s - Limit: %.2f, Current Expenses: %.2f, Remaining: %.2f",
-                super.getDetails(), budgetLimit, currentExpenses, calculateRemainingBudget());
+                budgetLimit, currentExpenses, calculateRemainingBudget());
     }
 
 

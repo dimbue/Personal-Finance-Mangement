@@ -4,6 +4,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
+
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Date;
@@ -11,17 +12,20 @@ import java.util.Date;
 public class FinanceApp extends Application {
 
     private User user;
+    private ListView<String> recordListView; // This ListView will allow for the user to see listed summary
+    private TextArea recordDetailsArea; // This will show the details
 
     @Override
     public void start(Stage primaryStage) {
         // Initialize the user object
         user = new User("U001", "John Doe", "Account123");
 
-        // Layouts
-        VBox layout = new VBox(10);
-        layout.setPadding(new Insets(10)); // Use Insets from javafx.geometry
+        // Main layout using BorderPane
+        BorderPane layout = new BorderPane();
+        VBox formLayout = new VBox(10);
+        formLayout.setPadding(new Insets(10));
 
-        // Form fields for adding a financial record
+        // The fields to type in the information
         TextField dateField = new TextField();
         dateField.setPromptText("Date (YYYY-MM-DD)");
 
@@ -44,65 +48,90 @@ public class FinanceApp extends Application {
         Button undoButton = new Button("Undo Last Transaction");
         undoButton.setDisable(true); // Disabled initially
 
+        // Record ListView
+        recordListView = new ListView<>();
+        recordListView.setPrefWidth(200); // Changing the width of view
+        recordListView.setMinWidth(250);
+        recordListView.setMaxWidth(Double.MAX_VALUE);
+
+        // Record Details Area
+        recordDetailsArea = new TextArea();
+        recordDetailsArea.setEditable(false);
+        recordDetailsArea.setPrefWidth(300);
+
         // Add Record Button Action
         addRecordButton.setOnAction(e -> {
             try {
                 String dateString = dateField.getText();
-                // Parse the string into a LocalDate object
                 DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
                 LocalDate localDate = LocalDate.parse(dateString, formatter);
-                Date date = java.sql.Date.valueOf(localDate); // Convert to java.util.Date if needed
+                Date date = java.sql.Date.valueOf(localDate);
 
                 double amount = Double.parseDouble(amountField.getText());
                 String description = descriptionField.getText();
                 String type = typeField.getText();
-                String extra = extraField.getText();  // For investmentType, or budgetLimit
+                String extra = extraField.getText();
 
                 FinancialRecord record = null;
 
                 switch (type.toLowerCase()) {
                     case "transaction":
-                        record = new Transaction(date, amount, description, extra, "Expense");
+                        record = new Transaction(date, amount, description, "Expense");
                         break;
                     case "budget":
                         record = new Budget(date, amount, description, Double.parseDouble(extra), 0.0);
                         break;
                     case "investment":
-                        // Pass correct arguments: investmentType (String), returns (int)
-                        record = new Investment(date, amount, description, extra, Integer.parseInt(extra));
+                        record = new Investment(date, amount, description, extra, 0.0); // Initial Return will be 0.0
                         break;
                     default:
                         throw new IllegalArgumentException("Invalid type: " + type);
                 }
 
                 user.addRecord(record);
+                recordListView.getItems().add(record.getDetails());
                 statusLabel.setText("Record added successfully!");
-                undoButton.setDisable(false); // Enable the undo button
+                undoButton.setDisable(false);
 
             } catch (Exception ex) {
                 statusLabel.setText("Error: " + ex.getMessage());
             }
         });
 
-
         // Undo Button Action
         undoButton.setOnAction(e -> {
             user.undoLastRecord();
+            recordListView.getItems().remove(recordListView.getItems().size() - 1);
             statusLabel.setText("Last record undone.");
             if (user.getFinancialSummary().isEmpty()) {
-                undoButton.setDisable(true); // Disable if no records remain
+                undoButton.setDisable(true);
             }
         });
 
-        // Layout configuration
-        layout.getChildren().addAll(
+        // Record ListView Selection Action
+        recordListView.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
+            if (newValue != null) {
+                int selectedIndex = recordListView.getSelectionModel().getSelectedIndex();
+                FinancialRecord selectedRecord = user.financialRecords.get(selectedIndex);
+                recordDetailsArea.setText(selectedRecord.getDetails());
+            }
+        });
+
+
+        formLayout.getChildren().addAll(
                 new Label("Add Financial Record"),
                 dateField, amountField, descriptionField, typeField, extraField,
                 addRecordButton, undoButton, statusLabel
         );
+    //Making the box a bit more user friendly and easier on the eyes
+        HBox mainContent = new HBox(10, recordListView, recordDetailsArea);
+        mainContent.setHgrow(recordListView, Priority.ALWAYS);
+        layout.setTop(formLayout);
+        layout.setCenter(mainContent);
+        layout.setStyle("-fx-background-color: tan;");
 
         // Scene setup
-        Scene scene = new Scene(layout, 400, 300);
+        Scene scene = new Scene(layout, 800, 600);
         primaryStage.setScene(scene);
         primaryStage.setTitle("Finance Management");
         primaryStage.show();
@@ -112,3 +141,4 @@ public class FinanceApp extends Application {
         launch(args);
     }
 }
+
