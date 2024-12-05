@@ -14,11 +14,16 @@ public class FinanceApp extends Application {
     private User user;
     private ListView<String> recordListView; // This ListView will allow for the user to see listed summary
     private TextArea recordDetailsArea; // This will show the details
+    private FinancialRecordTree recordTree;//This is to manage the tree structure
+    private FinancialRecord foundRecord;
 
     @Override
     public void start(Stage primaryStage) {
         // Initialize the user object
         user = new User("U001", "John Doe", "Account123");
+        recordTree= new FinancialRecordTree();//Intializing the Record Tree
+
+
 
         // Main layout using BorderPane
         BorderPane layout = new BorderPane();
@@ -43,6 +48,8 @@ public class FinanceApp extends Application {
 
         Button addRecordButton = new Button("Add Record");
         Label statusLabel = new Label();
+
+
 
         // Undo Button
         Button undoButton = new Button("Undo Last Transaction");
@@ -89,6 +96,7 @@ public class FinanceApp extends Application {
                 }
 
                 user.addRecord(record);
+                recordTree.add(record);//This will add the record to the tree
                 recordListView.getItems().add(record.getDetails());
                 statusLabel.setText("Record added successfully!");
                 undoButton.setDisable(false);
@@ -117,13 +125,54 @@ public class FinanceApp extends Application {
             }
         });
 
+        //TextField to search for the date
+        TextField searchDateField = new TextField();
+        searchDateField.setPromptText("Enter date to search (YYYY-MM-DD");
+
+        Button searchButton = new Button("Search Record");
+        Button printAllButton = new Button("Print All Records");
+
+        //Layout for search
+        VBox searchLayout = new VBox(10, new Label("Search Record by Date"), searchDateField, searchButton);
+        searchLayout.setPadding(new Insets(10));
+        formLayout.getChildren().add(searchLayout);
+
+
+        searchButton.setOnAction(e -> {
+            try {
+                String dateInput = searchDateField.getText();
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+                LocalDate localDate = LocalDate.parse(dateInput, formatter);
+                Date someDate = java.sql.Date.valueOf(localDate); // Define someDate here
+
+                FinancialRecord foundRecord = user.searchByDate(someDate); // Perform the search
+                if (foundRecord != null) {
+                    recordDetailsArea.setText(foundRecord.getDetails());
+                } else {
+                    recordDetailsArea.setText("No record found for the given date.");
+                }
+            } catch (Exception ex) {
+                recordDetailsArea.setText("Error: " + ex.getMessage());
+            }
+        });
+        printAllButton.setOnAction(e -> {
+            recordDetailsArea.clear();
+            recordTree.printInOrder();//Prints to the console
+        });
+
+
 
         formLayout.getChildren().addAll(
                 new Label("Add Financial Record"),
                 dateField, amountField, descriptionField, typeField, extraField,
-                addRecordButton, undoButton, statusLabel
+                addRecordButton, undoButton, statusLabel,
+                new Label("Search Financial Record"),
+                searchDateField, searchButton,
+                printAllButton
         );
-    //Making the box a bit more user friendly and easier on the eyes
+
+
+        //Making the box a bit more user friendly and easier on the eyes
         HBox mainContent = new HBox(10, recordListView, recordDetailsArea);
         mainContent.setHgrow(recordListView, Priority.ALWAYS);
         layout.setTop(formLayout);
@@ -136,6 +185,8 @@ public class FinanceApp extends Application {
         primaryStage.setTitle("Finance Management");
         primaryStage.show();
     }
+
+
 
     public static void main(String[] args) {
         launch(args);

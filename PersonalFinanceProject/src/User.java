@@ -1,6 +1,7 @@
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Stack;
+import java.util.Date;
 
 public class User {
     private String userID;
@@ -10,6 +11,7 @@ public class User {
     private HashMap<String, FinancialRecord> recordMap; // Maps record IDs to FinancialRecord objects
     private Stack<FinancialRecord> recordHistory; // Stack for undo functionality
     private int recordCounter = 0; // Counter that will create unique record IDs once implemented correctly
+    private FinancialRecordTree recordTree;//This stores the FinancialRecordTree
 
     //Some of the methods have not been fully implemented yet- Am planning to allow for this in the final
     public User(String userID, String name, String accountDetails) {
@@ -19,6 +21,7 @@ public class User {
         this.financialRecords = new ArrayList<>();
         this.recordMap = new HashMap<>(); // Initialize the HashMap
         this.recordHistory = new Stack<>(); // Initialize the Stack
+        this.recordTree= new FinancialRecordTree();//Financial Tree is intitialized
     }
 
     public String getName() {
@@ -32,12 +35,17 @@ public class User {
         recordHistory.push(record); // Push to stack for undo functionality
     }
 
-    // This will hopfully give a unique record ID
+    // This will hopefully give a unique record ID
     public void addRecord(FinancialRecord record) {
         String recordID = "Record" + (++recordCounter); // Generate a unique record ID
         addRecord(recordID, record); // Call the primary addRecord method
+        recordTree.add(record); // Add the record to the tree as well
     }
 
+
+    public FinancialRecord searchByDate(Date date){
+        return recordTree.search(date);//This will allow for the search in the tree
+    }
     // Undo the last financial record addition
     public void undoLastRecord() {
         if (!recordHistory.isEmpty()) {
