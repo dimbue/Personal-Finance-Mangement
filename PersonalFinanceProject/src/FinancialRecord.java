@@ -1,5 +1,7 @@
+import java.io.Serializable;
 import java.util.Date;
-public abstract class FinancialRecord {
+public abstract class FinancialRecord implements Serializable {
+
     protected Date date;
     protected double amount;
     protected String description;
@@ -17,7 +19,4 @@ public abstract class FinancialRecord {
     public abstract String getDetails();
     public abstract double calculateTotal();
 
-    public double getAmount() {
-        return amount;
-    }
 }

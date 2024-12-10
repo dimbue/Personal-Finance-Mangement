@@ -1,5 +1,6 @@
+import java.io.Serializable;
 import java.util.Date;
-public class Transaction extends FinancialRecord {
+public class Transaction extends FinancialRecord implements Serializable {
     private String category;
     private String transactionType;
 

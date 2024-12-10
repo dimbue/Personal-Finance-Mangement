@@ -1,5 +1,6 @@
+import java.io.Serializable;
 import java.util.Date;
-public class Budget extends FinancialRecord {
+public class Budget extends FinancialRecord implements Serializable {
     private double budgetLimit;
     private double currentExpenses;
 

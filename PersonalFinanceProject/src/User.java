@@ -10,7 +10,6 @@ public class User {
     protected ArrayList<FinancialRecord> financialRecords;
     private HashMap<String, FinancialRecord> recordMap; // Maps record IDs to FinancialRecord objects
     private Stack<FinancialRecord> recordHistory; // Stack for undo functionality
-    private int recordCounter = 0; // Counter that will create unique record IDs once implemented correctly
     private FinancialRecordTree recordTree;//This stores the FinancialRecordTree
 
     //Some of the methods have not been fully implemented yet- Am planning to allow for this in the final
@@ -18,30 +17,30 @@ public class User {
         this.userID = userID;
         this.name = name;
         this.accountDetails = accountDetails;
-        this.financialRecords = new ArrayList<>();
+        //These intialize and contribute to the population of the tree and records
+        this.financialRecords = FileManager.loadRecords();
         this.recordMap = new HashMap<>(); // Initialize the HashMap
         this.recordHistory = new Stack<>(); // Initialize the Stack
         this.recordTree= new FinancialRecordTree();//Financial Tree is intitialized
+        for(FinancialRecord record: financialRecords){
+            recordTree.add(record);//This will add the existing records to the tree
+        }
     }
 
-    public String getName() {
-        return name;
+    public void saveRecords(){
+        FileManager.saveRecords(financialRecords);
     }
+
+
 
     // Add a financial record with a user-specified recordID
-    public void addRecord(String recordID, FinancialRecord record) {
-        financialRecords.add(record);
-        recordMap.put(recordID, record); // Add to the HashMap for efficient lookup
-        recordHistory.push(record); // Push to stack for undo functionality
-    }
-
-    // This will hopefully give a unique record ID
     public void addRecord(FinancialRecord record) {
-        String recordID = "Record" + (++recordCounter); // Generate a unique record ID
-        addRecord(recordID, record); // Call the primary addRecord method
-        recordTree.add(record); // Add the record to the tree as well
+        financialRecords.add(record);
+        String recordID = null;
+        recordMap.put(recordID,record); // Add to the HashMap for efficient lookup
+        recordHistory.push(record); // Push to stack for undo functionality
+        saveRecords();//This will help the save the information immediately after adding.
     }
-
 
     public FinancialRecord searchByDate(Date date){
         return recordTree.search(date);//This will allow for the search in the tree
@@ -75,5 +74,8 @@ public class User {
             summary.append(record.getDetails()).append("\n");
         }
         return summary.toString();
+
+
     }
+
 }

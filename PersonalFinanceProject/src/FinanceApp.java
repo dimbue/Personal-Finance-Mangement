@@ -2,12 +2,16 @@ import javafx.application.Application;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
-import javafx.scene.layout.*;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Date;
+import java.util.Optional;
 
 public class FinanceApp extends Application {
 
@@ -21,9 +25,20 @@ public class FinanceApp extends Application {
     public void start(Stage primaryStage) {
         // Initialize the user object
         user = new User("U001", "John Doe", "Account123");
-        recordTree= new FinancialRecordTree();//Intializing the Record Tree
 
+        //Initializing the record tree
+        recordTree = new FinancialRecordTree();
 
+        // Record ListView
+        recordListView = new ListView<>();
+        recordListView.setPrefWidth(200); // Changing the width of view
+        recordListView.setMinWidth(250);
+        recordListView.setMaxWidth(Double.MAX_VALUE);
+
+        for (FinancialRecord record : user.financialRecords) {
+            recordListView.getItems().add(record.getDetails()); /* This will Populate the list view with the
+            records already loaded in*/
+        }
 
         // Main layout using BorderPane
         BorderPane layout = new BorderPane();
@@ -44,22 +59,62 @@ public class FinanceApp extends Application {
         typeField.setPromptText("Type (Transaction, Budget, or Investment)");
 
         TextField extraField = new TextField();
-        extraField.setPromptText("Extra Info (Category/Limit/Returns)");
+        extraField.setPromptText("Extra Info(Stock Name/Catagory)");
 
+        //This is the textfield allowing for the user to update the return amount
+        TextField updateReturnField= new TextField();
+        updateReturnField.setPromptText("Enter new return");
+
+        //Add record Button
         Button addRecordButton = new Button("Add Record");
         Label statusLabel = new Label();
 
+
+        // Create Delete button
+        Button deleteButton = new Button("Delete Selected Record");
+        deleteButton.setOnAction(e -> {
+            String selectedTransaction = recordListView.getSelectionModel().getSelectedItem();
+            if (selectedTransaction != null) {
+                deleteTransaction(selectedTransaction);  // Pass selected transaction to deleteTransaction
+            }
+        });
 
 
         // Undo Button
         Button undoButton = new Button("Undo Last Transaction");
         undoButton.setDisable(true); // Disabled initially
 
-        // Record ListView
-        recordListView = new ListView<>();
-        recordListView.setPrefWidth(200); // Changing the width of view
-        recordListView.setMinWidth(250);
-        recordListView.setMaxWidth(Double.MAX_VALUE);
+        //Update the returns button
+        Button updateReturnButton= new Button("Update Return");
+        updateReturnButton.setOnAction(e->{
+            //This will grab the selected record
+            int selectedIndex= recordListView.getSelectionModel().getSelectedIndex();
+            if(selectedIndex!=-1){
+                FinancialRecord selectedRecord= user.financialRecords.get(selectedIndex);
+
+                //This will check if it is an investment
+                if(selectedRecord instanceof Investment) {
+                    Investment investment = (Investment) selectedRecord;
+                    try {
+                        //Take the entered return amount from the user
+                        double newReturnAmount = Double.parseDouble(updateReturnField.getText());
+                        investment.updateReturns(newReturnAmount);
+
+                        //To update the display
+                        recordDetailsArea.setText(investment.getDetails());
+
+                        //This also updates the ListView to show the change
+                        recordListView.getItems().set(selectedIndex, investment.getDetails());
+                    } catch (NumberFormatException ex) {
+                        statusLabel.setText("Invalid input for returns");
+                    }
+                }else{
+                    statusLabel.setText("Selected record is not an investment");
+                }
+            }
+        });
+
+
 
         // Record Details Area
         recordDetailsArea = new TextArea();
@@ -116,6 +171,8 @@ public class FinanceApp extends Application {
             }
         });
 
+
+
         // Record ListView Selection Action
         recordListView.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
             if (newValue != null) {
@@ -125,17 +182,23 @@ public class FinanceApp extends Application {
             }
         });
 
+
+
         //TextField to search for the date
         TextField searchDateField = new TextField();
-        searchDateField.setPromptText("Enter date to search (YYYY-MM-DD");
+        searchDateField.setPromptText("Enter date to search (YYYY-MM-DD)");
 
         Button searchButton = new Button("Search Record");
         Button printAllButton = new Button("Print All Records");
 
         //Layout for search
-        VBox searchLayout = new VBox(10, new Label("Search Record by Date"), searchDateField, searchButton);
+        VBox searchLayout = new VBox(10, new Label("Financial Management Program"), searchDateField, searchButton);
         searchLayout.setPadding(new Insets(10));
         formLayout.getChildren().add(searchLayout);
+
+        // Add the "Update Return" field and button to the layout
+        VBox updateLayout = new VBox(10, updateReturnField, updateReturnButton);
+        updateLayout.setPadding(new Insets(10));
 
 
         searchButton.setOnAction(e -> {
@@ -162,13 +225,13 @@ public class FinanceApp extends Application {
 
 
 
+        // Layout for form and buttons
         formLayout.getChildren().addAll(
                 new Label("Add Financial Record"),
                 dateField, amountField, descriptionField, typeField, extraField,
-                addRecordButton, undoButton, statusLabel,
-                new Label("Search Financial Record"),
-                searchDateField, searchButton,
-                printAllButton
+                addRecordButton, statusLabel,
+                new Label("Update Investment Return"),
+                updateReturnField, updateReturnButton
         );
 
 
@@ -184,6 +247,58 @@ public class FinanceApp extends Application {
         primaryStage.setScene(scene);
         primaryStage.setTitle("Finance Management");
         primaryStage.show();
+    }
+
+    @Override
+    public void stop() {
+        FileManager.saveRecords(user.getFinancialRecords());
+    }
+
+    private void setupTransactionDeleteFeature() {
+        recordListView.setOnMouseClicked(event -> {
+            if (event.getClickCount() == 2) { // Double-click to delete
+                // Get the selected transaction
+                String selectedTransaction = recordListView.getSelectionModel().getSelectedItem();
+                if (selectedTransaction != null) {
+                    // Confirm deletion
+                    Alert confirmationAlert = new Alert(Alert.AlertType.CONFIRMATION);
+                    confirmationAlert.setTitle("Delete Transaction");
+                    confirmationAlert.setHeaderText("Are you sure you want to delete this transaction?");
+                    confirmationAlert.setContentText(selectedTransaction);
+
+                    // Show the confirmation dialog
+                    Optional<ButtonType> result = confirmationAlert.showAndWait();
+                    if (result.isPresent() && result.get() == ButtonType.OK) {
+                        // Delete the transaction
+                        deleteTransaction(selectedTransaction);
+                    }
+                }
+            }
+        });
+    }
+
+    private void deleteTransaction(String transactionDetails) {
+        // Remove from the ListView
+        recordListView.getItems().remove(transactionDetails);
+
+        // Find and remove the record from the user's financial records
+        FinancialRecord recordToDelete = null;
+        for (FinancialRecord record : user.financialRecords) {
+            if (record.getDetails().equals(transactionDetails)) {
+                recordToDelete = record;
+                break;
+            }
+        }
+
+        if (recordToDelete != null) {
+            user.financialRecords.remove(recordToDelete);
+
+            // Remove from the tree structure
+            recordTree.remove(recordToDelete);  // Now this works
+
+            // Optionally, update the file if needed
+            FileManager.saveRecords(user.financialRecords); // Persist the change
+        }
     }
 
 

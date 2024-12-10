@@ -30,6 +30,52 @@ public class FinancialRecordTree {
         return node;
     }
 
+    // Remove a financial record from the tree
+    public void remove(FinancialRecord record) {
+        root = removeRecursive(root, record);
+    }
+
+    private TreeNode removeRecursive(TreeNode node, FinancialRecord record) {
+        if (node == null) {
+            return null;
+        }
+
+        if (record.getDate().before(node.record.getDate())) {
+            node.left = removeRecursive(node.left, record);
+        } else if (record.getDate().after(node.record.getDate())) {
+            node.right = removeRecursive(node.right, record);
+        } else {
+            // Node to be deleted found
+
+            // Case 1: Node has no children (leaf node)
+            if (node.left == null && node.right == null) {
+                return null;
+            }
+
+            // Case 2: Node has one child
+            if (node.left == null) {
+                return node.right;
+            } else if (node.right == null) {
+                return node.left;
+            }
+
+            // Case 3: Node has two children
+            // Get the smallest node from the right subtree
+            node.record = findMin(node.right).record;
+            // Delete the smallest node from the right subtree
+            node.right = removeRecursive(node.right, node.record);
+        }
+
+        return node;
+    }
+
+    private TreeNode findMin(TreeNode node) {
+        while (node.left != null) {
+            node = node.left;
+        }
+        return node;
+    }
+
     // Search for a record by date
     public FinancialRecord search(Date date) {
         return searchRecursive(root, date);
