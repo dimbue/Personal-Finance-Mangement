@@ -65,6 +65,11 @@ public class FinanceApp extends Application {
         TextField updateReturnField= new TextField();
         updateReturnField.setPromptText("Enter new return");
 
+
+        //This is in connection to the Financial Analyzer
+        ProgressBar progressBar = new ProgressBar();
+
+
         //Add record Button
         Button addRecordButton = new Button("Add Record");
         Label statusLabel = new Label();
@@ -229,7 +234,7 @@ public class FinanceApp extends Application {
         formLayout.getChildren().addAll(
                 new Label("Add Financial Record"),
                 dateField, amountField, descriptionField, typeField, extraField,
-                addRecordButton, statusLabel,
+                addRecordButton, statusLabel,deleteButton,undoButton,
                 new Label("Update Investment Return"),
                 updateReturnField, updateReturnButton
         );
@@ -294,9 +299,8 @@ public class FinanceApp extends Application {
             user.financialRecords.remove(recordToDelete);
 
             // Remove from the tree structure
-            recordTree.remove(recordToDelete);  // Now this works
+            recordTree.remove(recordToDelete);
 
-            // Optionally, update the file if needed
             FileManager.saveRecords(user.financialRecords); // Persist the change
         }
     }

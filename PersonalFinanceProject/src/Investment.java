@@ -22,15 +22,23 @@ public class Investment extends FinancialRecord implements Serializable {
         return amount + returns;
     }
 
-    // Updated method to calculate returns based on a percentage
+    //This allows for the User to update their returns but they are also unable to make it negative so it is realistic.
+    public void updateReturns(double newReturns) {
+        if (newReturns >= 0) {
+            this.returns = newReturns;
+        } else {
+            throw new IllegalArgumentException("Returns cannot be negative.");
+        }
+    }
+    //Would allow for the functionality to calculate the return and then return the percentage
     public void calculateReturns(double returnPercentage) {
-        returns = amount * returnPercentage / 100;
+        if (returnPercentage >= 0 && returnPercentage <= 100) {
+            this.returns = amount * returnPercentage / 100;
+        } else {
+            throw new IllegalArgumentException("Return percentage must be between 0 and 100.");
+        }
     }
 
-    //This allows the user to make the updates themselves
-    public void updateReturns(double newReturns){
-        this.returns= newReturns;
-    }
 
     //This method will return the current return value
     public double getReturns(){
